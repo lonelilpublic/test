@@ -1,0 +1,38 @@
+name: Build Firefox on Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MozillaBuild
+        run: |
+          choco install mozillabuild -y --no-progress
+
+      - name: Bootstrap Mozilla Source
+        working-directory: C:\
+        shell: C:\mozilla-build\start-shell.bat -here -e {0}
+        run: |
+          mkdir mozilla-source
+          cd mozilla-source
+          git clone --depth 1 --branch $version https://github.com/mozilla/gecko-dev mozilla-unified
+
+      - name: Build and Package
+        working-directory: C:\mozilla-source\mozilla-unified
+        shell: C:\mozilla-build\start-shell.bat -here -e {0}
+        run: |
+          ./mach --no-interactive bootstrap --application-choice=browser
+          ./mach build
+          ./mach package
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-firefox-${{ env.version }}-amd64
+          path: "C:/mozilla-source/mozilla-unified/obj-x86_64-pc-windows-msvc/dist/install/sea"
