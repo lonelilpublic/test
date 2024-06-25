@@ -9,11 +9,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-
       - name: Install MozillaBuild
-        run: |
-          choco install mozillabuild -y
+        run: choco install mozillabuild -y
           
       - name: Bootstrap Mozilla Source
         working-directory: C:\
@@ -21,18 +18,29 @@ jobs:
         run: |
           mkdir mozilla-source
           cd mozilla-source
-          git clone --depth 1 --branch $version https://github.com/mozilla/gecko-dev mozilla-unified
+          wget --tries=5 https://hg.mozilla.org/mozilla-central/raw-file/default/python/mozboot/bin/bootstrap.py
+          python3 bootstrap.py --application-choice=browser --no-interactive
+
+      - name: Update Local Source
+        working-directory: C:\mozilla-source\mozilla-unified
+        shell: C:\mozilla-build\start-shell.bat -here -e {0}
+        run: hg up -C central
+
+      - name: Initialize `mozconfig`
+        working-directory: C:\mozilla-source\mozilla-unified
+        shell: C:\mozilla-build\start-shell.bat -here -e {0}
+        run: echo "ac_add_options --with-branding=browser/branding/official" > mozconfig
 
       - name: Build and Package
         working-directory: C:\mozilla-source\mozilla-unified
         shell: C:\mozilla-build\start-shell.bat -here -e {0}
         run: |
-          ./mach --no-interactive bootstrap --application-choice=browser
           ./mach build
           ./mach package
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: windows-firefox-${{ env.version }}-amd64
+          name: windows-firefox-artifacts
           path: "C:/mozilla-source/mozilla-unified/obj-x86_64-pc-windows-msvc/dist/install/sea"
+          
