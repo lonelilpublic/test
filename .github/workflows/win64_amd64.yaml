@@ -13,8 +13,8 @@ jobs:
 
       - name: Install MozillaBuild
         run: |
-          choco install mozillabuild -y --no-progress
-
+          choco install mozillabuild -y
+          
       - name: Bootstrap Mozilla Source
         working-directory: C:\
         shell: C:\mozilla-build\start-shell.bat -here -e {0}
