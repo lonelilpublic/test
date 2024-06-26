@@ -21,7 +21,7 @@ jobs:
       - name: Bootstrap Mozilla Source
         run: |
           curl https://hg.mozilla.org/mozilla-central/raw-file/default/python/mozboot/bin/bootstrap.py -O
-          python3 bootstrap.py --application-choice=browser_artifact_mode --no-interactive
+          python3 bootstrap.py --application-choice=browser --no-interactive
 
       - name: Update Local Source
         working-directory: ./mozilla-unified
