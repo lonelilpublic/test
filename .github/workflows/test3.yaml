@@ -1,0 +1,40 @@
+name: Build Firefox Linux
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Free up Disk Space
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+
+      - name: Bootstrap Mozilla Source
+        run: |
+          curl https://hg.mozilla.org/mozilla-central/raw-file/default/python/mozboot/bin/bootstrap.py -O
+          python3 bootstrap.py --application-choice=browser_artifact_mode --no-interactive
+
+      - name: Update Local Source
+        working-directory: ./mozilla-unified
+        run: hg up -C central
+
+      - name: Build and Package
+        working-directory: ./mozilla-unified
+        run: |
+          ./mach build 
+          ./mach package
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-firefox-artifacts
+          path: "./mozilla-unified/obj-x86_64-pc-linux-gnu/dist/*.tar.bz2"
