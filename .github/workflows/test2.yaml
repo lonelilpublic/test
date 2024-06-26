@@ -1,0 +1,54 @@
+name: Build Firefox
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Install MozillaBuild
+      run: choco install mozillabuild -y
+
+    - name: Bootstrap Mozilla Source
+      working-directory: C:\
+      shell: C:\mozilla-build\start-shell.bat -here -e {0}
+      run: |
+        mkdir mozilla-source
+        cd mozilla-source
+        wget --tries=5 https://hg.mozilla.org/mozilla-central/raw-file/default/python/mozboot/bin/bootstrap.py
+        python3 bootstrap.py --application-choice=browser_artifact_mode --no-interactive
+
+    - name: Update Local Source
+      working-directory: C:\mozilla-source\mozilla-unified
+      shell: C:\mozilla-build\start-shell.bat -here -e {0}
+      run: hg up -C central
+
+    - name: Create policy.json
+      run: |
+        @"
+        {
+          "policies": {
+            "Homepage": {
+              "URL": "https://example.com",
+              "Locked": true
+            }
+          }
+        }
+        "@ | Out-File -FilePath C:\mozilla-source\mozilla-unified\distribution\policies.json -Encoding utf8
+
+    - name: Build and Package
+      working-directory: C:\mozilla-source\mozilla-unified
+      shell: C:\mozilla-build\start-shell.bat -here -e {0}
+      run: |
+        ./mach build
+        ./mach package
+
+    - name: Archive Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build
+        path: obj-*/dist/
