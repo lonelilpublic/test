@@ -20,7 +20,7 @@ jobs:
         mkdir mozilla-source
         cd mozilla-source
         wget --tries=5 https://hg.mozilla.org/mozilla-central/raw-file/default/python/mozboot/bin/bootstrap.py
-        python3 bootstrap.py --application-choice=browser_artifact_mode --no-interactive
+        python3 bootstrap.py --application-choice=browser --no-interactive
 
     - name: Update Local Source
       working-directory: C:\mozilla-source\mozilla-unified
