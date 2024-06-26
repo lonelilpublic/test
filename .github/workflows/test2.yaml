@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - name: Install MozillaBuild
-      run: choco install mozillabuild -y
+      run: choco install mozillabuild -y --no-progress
 
     - name: Bootstrap Mozilla Source
       working-directory: C:\
